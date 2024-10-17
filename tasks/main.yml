@@ -1,0 +1,64 @@
+---
+
+- name: Check mysqld exporter
+  stat:
+    path: /usr/sbin/mysqld_exporter
+  register: mysqld_exporter_bin
+
+
+- name: Download mysqld exporter
+  get_url:
+    url: https://github.com/prometheus/mysqld_exporter/releases/download/v0.15.0/mysqld_exporter-0.15.0.linux-amd64.tar.gz
+    dest: /tmp
+  when: mysqld_exporter_bin.stat.exists != true
+
+
+- name: Extract mysqld exporter
+  ansible.builtin.unarchive:
+    src: /tmp/mysqld_exporter-0.15.0.linux-amd64.tar.gz
+    dest: /usr/sbin
+    owner: root
+    group: root
+    mode: 0755
+    remote_src: true
+    exclude:
+    - LICENSE
+    - NOTICE
+    extra_opts:
+    - --strip-components
+    - 1
+  when: mysqld_exporter_bin.stat.exists != true
+
+
+- name: Add user for mysqld_exporter
+  user:
+    name: prometheus
+    create_home: no
+
+
+- name: Copy env file
+  template:
+    src: mysqld_exporter
+    dest: /etc/default/mysqld_exporter
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+    - Restart mysqld exporter
+
+
+- name: Copy systemd unit
+  copy:
+    src: mysqld_exporter.service
+    dest: /etc/systemd/system/mysqld_exporter.service
+    owner: root
+    group: root
+    mode: 0644
+
+
+- name: Start mysqld exporter
+  systemd:
+    name: mysqld_exporter
+    state: started
+    daemon_reload: true
+    enabled: true

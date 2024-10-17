@@ -1,0 +1,6 @@
+---
+
+- name: Restart mysqld exporter
+  systemd:
+    name: mysqld_exporter
+    state: restarted

@@ -1,0 +1,4 @@
+OPTIONS="--mysqld.username=mysqld_exporter\
+         --mysqld.address {{ mysqld_host }}:3306"
+MYSQLD_EXPORTER_PASSWORD={{ mysqld_exporter_password }}
+
